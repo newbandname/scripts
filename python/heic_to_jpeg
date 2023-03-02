@@ -1,0 +1,29 @@
+import boto3
+from PIL import Image
+import os
+
+s3 = boto3.resource('s3')
+
+def lambda_handler(event, context):
+    # Get the S3 bucket and key from the event
+    bucket_name = event['Records'][0]['s3']['bucket']['name']
+    key = event['Records'][0]['s3']['object']['key']
+    
+    # Set input and output filenames
+    input_filename = os.path.basename(key)
+    output_filename = input_filename.replace('.HEIC', '.jpg')
+    
+    # Download the HEIC image from S3
+    s3.Bucket(bucket_name).download_file(key, '/tmp/' + input_filename)
+    
+    # Open the HEIC image and convert it to JPEG
+    with Image.open('/tmp/' + input_filename) as image:
+        image.convert('RGB').save('/tmp/' + output_filename, 'JPEG')
+    
+    # Upload the JPEG image to S3
+    s3.Bucket(bucket_name).upload_file('/tmp/' + output_filename, output_filename)
+    
+    return {
+        'statusCode': 200,
+        'body': 'Image converted successfully'
+    }
