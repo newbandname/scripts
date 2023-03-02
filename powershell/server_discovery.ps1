@@ -99,4 +99,7 @@ $html = @"
 "@
 
 # Save HTML report to file
-$html | Out-File -FilePath "$outputDir\$
+$html | Out-File -FilePath "$outputDir\$outputFile"
+
+# Display message to confirm report generation
+Write-Host "System information report generated successfully at $outputDir\$outputFile"
