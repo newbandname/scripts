@@ -9,38 +9,44 @@ function Get-SystemInfo {
     # Get OS information
     $osInfo = Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber, OSArchitecture
     
-    # Get RAM information
-    $ramInfo = Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum | Select-Object @{Name='RAM';Expression={$_.Sum / 1GB}}, Count
+    # Get RAM information in GB
+    $ramInfo = Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum | Select-Object @{Name='RAM (GB)';Expression={$_.Sum / 1GB}}, Count
     
     # Get CPU information
     $cpuInfo = Get-CimInstance -ClassName Win32_Processor | Select-Object Name, MaxClockSpeed, Caption, NumberOfCores, NumberOfLogicalProcessors
     
-    # Get logical disk information
-    $diskInfo = Get-CimInstance -ClassName Win32_LogicalDisk | Select-Object DeviceID, MediaType, Size, FreeSpace
+    # Get logical disk information in GB
+    $diskInfo = Get-CimInstance -ClassName Win32_LogicalDisk | Select-Object DeviceID, MediaType, @{Name='Size (GB)';Expression={$_.Size / 1GB}}, @{Name='FreeSpace (GB)';Expression={$_.FreeSpace / 1GB}}
     
     # Get file share information
     $shareInfo = Get-SmbShare
     
-    # Get page file information
-    $pageFileInfo = Get-CimInstance -ClassName Win32_PageFileUsage | Select-Object Name, CurrentUsage
+    # Get page file information in GB
+    $pageFileInfo = Get-CimInstance -ClassName Win32_PageFileUsage | Select-Object Name, @{Name='CurrentUsage (GB)';Expression={$_.CurrentUsage / 1GB}}
     
     # Get network interface information
     $netInfo = Get-NetAdapter | Select-Object Name, InterfaceDescription, Status
     
     # Get IP configuration
-    $ipConfig = Get-NetIPAddress -AddressFamily IPv4 | Select-Object InterfaceAlias, IPAddress, PrefixLength, AddressState
+    $ipConfig = Get-NetIPAddress -AddressFamily IPv4
     
     # Get installed software
-    $software = Get-WmiObject -Class Win32_Product | Select-Object Name, Version
+    $software = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher
     
     # Get installed services
     $services = Get-Service
     
-    # Get installed roles
+    # Get installed roles and features
     $roles = Get-WindowsFeature | Where-Object {$_.Installed -eq $True}
     
     # Get IIS site configurations
     $iisConfig = Get-WebConfiguration -Filter "/system.applicationHost/sites/site" | Select-Object Name, PhysicalPath, Bindings
+    
+    # Get list of administrator accounts
+    $adminAccounts = Get-LocalGroupMember Administrators
+    
+    # Get scheduled tasks
+    $scheduledTasks = Get-ScheduledTask
     
     # Create custom object with system information
     $systemInfo = [PSCustomObject]@{
@@ -57,6 +63,8 @@ function Get-SystemInfo {
         InstalledServices = $services
         InstalledRoles = $roles
         IISConfig = $iisConfig
+        AdministratorAccounts = $adminAccounts
+        ScheduledTasks = $scheduledTasks
     }
     
     return $systemInfo
@@ -69,37 +77,37 @@ $systemInfo = Get-SystemInfo
 $osTable = $systemInfo.OSInfo | ConvertTo-Html -Fragment -As Table -Property Caption, Version, BuildNumber, OSArchitecture
 
 # Create HTML table for RAM information
-$ramTable = $systemInfo.RAMInfo | ConvertTo-Html -Fragment -As Table -Property RAM, Count
+$ramTable = $systemInfo.RAMInfo | ConvertTo-Html -Fragment -As Table -Property 'RAM (GB)', Count
 
 # Create HTML table for CPU information
 $cpuTable = $systemInfo.CPUInfo | ConvertTo-Html -Fragment -As Table -Property Name, MaxClockSpeed, Caption, NumberOfCores, NumberOfLogicalProcessors
 
 # Create HTML table for logical disk information
-$diskTable = $systemInfo.DiskInfo | ConvertTo-Html -Fragment -As Table -Property DeviceID, MediaType, Size, FreeSpace
+$diskTable = $systemInfo.DiskInfo | ConvertTo-Html -Fragment -As Table -Property DeviceID, MediaType, 'Size (GB)', 'FreeSpace (GB)'
 
 # Create HTML table for file share information
 $shareTable = $systemInfo.ShareInfo | ConvertTo-Html -Fragment -As Table -Property Name, Path, Description, CurrentUsers, ShareState
 
 # Create HTML table for page file information
-$pageFileTable = $systemInfo.PageFileInfo | ConvertTo-Html -Fragment -As Table -Property Name, CurrentUsage
+$pageFileTable = $systemInfo.PageFileInfo | ConvertTo-Html -Fragment -As Table -Property Name, 'CurrentUsage (GB)'
 
 # Create HTML table for network interface information
 $netTable = $systemInfo.NetInfo | ConvertTo-Html -Fragment -As Table -Property Name, InterfaceDescription, Status
 
 # Create HTML table for IP configuration information
-$ipTable = $systemInfo.IPConfig | ConvertTo-Html -Fragment -As Table -Property InterfaceAlias, IPAddress, PrefixLength, AddressState
+$ipTable = $systemInfo.IPConfig | ConvertTo-Html -Fragment -As Table -Property IfIndex, InterfaceAlias, IPAddress, PrefixLength, AddressState
 
 # Create HTML table for installed software
-$softwareTable = $systemInfo.InstalledSoftware | ConvertTo-Html -Fragment -As Table -Property Name, Version
+$softwareTable = $systemInfo.InstalledSoftware | ConvertTo-Html -Fragment -As Table -Property DisplayName, DisplayVersion, Publisher
 
 # Create HTML table for installed services
 $servicesTable = $systemInfo.InstalledServices | ConvertTo-Html -Fragment -As Table -Property Name, DisplayName, Status, StartType, Description
 
-# Create HTML table for installed roles
-$rolesTable = $systemInfo.InstalledRoles | ConvertTo-Html -Fragment -As Table -Property Name, InstallState
+# Create HTML table for administrator accounts
+$adminTable = $systemInfo.AdministratorAccounts | ConvertTo-Html -Fragment -As Table -Property Name
 
-# Create HTML table for IIS site configurations
-$iisTable = $systemInfo.IISConfig | ConvertTo-Html -Fragment -As Table -Property Name, PhysicalPath, Bindings
+# Create HTML table for scheduled tasks
+$tasksTable = $systemInfo.ScheduledTasks | ConvertTo-Html -Fragment -As Table -Property TaskName, TaskPath, State, Status, LastRunTime, NextRunTime
 
 # Combine HTML tables into final report
 $html = @"
@@ -150,10 +158,10 @@ $html = @"
     $softwareTable
     <h2>Installed Services</h2>
     $servicesTable
-    <h2>Installed Roles</h2>
-    $rolesTable
-    <h2>IIS Site Configurations</h2>
-    $iisTable
+    <h2>Administrator Accounts</h2>
+    $adminTable
+    <h2>Scheduled Tasks</h2>
+    $tasksTable
 </body>
 </html>
 "@
