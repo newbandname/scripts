@@ -45,7 +45,7 @@ function Get-SystemInfo {
     
     # Get scheduled tasks
     $scheduledTasks = Get-ScheduledTask
-    
+}
     # Create custom object with system information
 $systemInfo = [PSCustomObject]@{
     ComputerName = $computerName
@@ -162,4 +162,4 @@ $htmlPath = Join-Path $outputDir $outputFile
 $html | Out-File $htmlPath
 
 # Output file location to console
-Write-Host "System information saved to $($htmlPath)"
+Write-Host "System information saved to $($htmlPath)"'
