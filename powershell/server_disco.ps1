@@ -1,3 +1,20 @@
+# This script will pull the following info from a server, format to an html file and output it to the local desktop:
+# OS information
+# CPU core count
+# Memory in GB 
+# Logical Disk info (round to nearest 100th)
+# File Share info
+# Page file info
+# Ethernet interface info
+# Runs and displays output of ipconfig/all
+# All installed roles
+# IIS site, if it exists (empty results if no IIS site is configured)
+# All installed software
+# All Services installed
+# All Scheduled Tasks details
+
+
+
 # Define file path for HTML file
 $htmlFilePath = "$($env:USERPROFILE)\Desktop\System-Info.html"
 
