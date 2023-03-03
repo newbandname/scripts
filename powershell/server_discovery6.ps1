@@ -1,7 +1,6 @@
 # Set output directory and filename
 $outputDir = "$env:USERPROFILE\Desktop"
 $outputFile = "system_info.html"
-$rolesFile = "roles_and_features.csv"
 
 # Define function to retrieve system information
 function Get-SystemInfo {
@@ -44,24 +43,27 @@ function Get-SystemInfo {
     $iisConfig = Get-WebConfiguration -Filter "/system.applicationHost/sites/site" | Select-Object Name, PhysicalPath, Bindings
     
     # Get scheduled tasks
-    $scheduledTasks = Get-ScheduledTask
-}
+    $scheduledTasks = Get-ScheduledTask | Select-Object TaskName, TaskPath, State, LastRunTime, NextRunTime, Status
+    
     # Create custom object with system information
-$systemInfo = [PSCustomObject]@{
-    ComputerName = $computerName
-    OSInfo = $osInfo
-    RAMInfo = $ramInfo
-    CPUInfo = $cpuInfo
-    DiskInfo = $diskInfo
-    ShareInfo = $shareInfo
-    PageFileInfo = $pageFileInfo
-    EthernetInfo = $ethInfo
-    IPConfig = $ipConfig
-    InstalledRoles = $roles
-    IISConfig = $iisConfig
-    InstalledSoftware = $software
-    InstalledServices = $services
-    ScheduledTasks = $scheduledTasks
+    $systemInfo = [PSCustomObject]@{
+        ComputerName = $computerName
+        OSInfo = $osInfo
+        RAMInfo = $ramInfo
+        CPUInfo = $cpuInfo
+        DiskInfo = $diskInfo
+        ShareInfo = $shareInfo
+        PageFileInfo = $pageFileInfo
+        NetInfo = $netInfo
+        IPConfig = $ipConfig
+        InstalledSoftware = $software
+        InstalledServices = $services
+        InstalledRoles = $roles
+        IISConfig = $iisConfig
+        ScheduledTasks = $scheduledTasks
+    }
+    
+    return $systemInfo
 }
 
 # Create HTML table for OS information
@@ -83,16 +85,15 @@ $shareTable = $systemInfo.ShareInfo | ConvertTo-Html -Fragment -As Table -Proper
 $pageFileTable = $systemInfo.PageFileInfo | ConvertTo-Html -Fragment -As Table -Property Name, 'CurrentUsage (GB)'
 
 # Create HTML table for ethernet interface information
-$ethTable = $systemInfo.EthernetInfo | ConvertTo-Html -Fragment -As Table -Property Name, InterfaceDescription, MacAddress, Speed, State
+$ethernetTable = $systemInfo.EthernetInfo | ConvertTo-Html -Fragment -As Table -Property Name, MacAddress, LinkSpeed, Duplex, Status
 
 # Create HTML table for IP configuration information
 $ipConfigTable = $systemInfo.IPConfig | ConvertTo-Html -Fragment -As Table -Property IPAddress, InterfaceAlias, InterfaceIndex, AddressFamily, Type, PrefixLength
 
-# Create HTML table for installed roles and features information
+# Create HTML table for installed roles and features information and export to CSV
 $rolesTable = $systemInfo.InstalledRoles | ConvertTo-Html -Fragment -As Table -Property Name, DisplayName, Installed, Parent, SubFeatures
-
-# Create HTML table for IIS site configurations information
-$iisTable = $systemInfo.IISConfig | ConvertTo-Html -Fragment -As Table -Property Name, PhysicalPath, Bindings
+$rolesPath = Join-Path $outputDir $rolesFile
+$systemInfo.InstalledRoles | Export-Csv -Path $rolesPath -NoTypeInformation
 
 # Create HTML table for installed software information
 $softwareTable = $systemInfo.InstalledSoftware | ConvertTo-Html -Fragment -As Table -Property DisplayName, DisplayVersion, Publisher
@@ -100,7 +101,7 @@ $softwareTable = $systemInfo.InstalledSoftware | ConvertTo-Html -Fragment -As Ta
 # Create HTML table for installed services information
 $servicesTable = $systemInfo.InstalledServices | ConvertTo-Html -Fragment -As Table -Property Name, DisplayName, Status, StartType, ServiceType, PathName, Description
 
-# Create HTML table for scheduled tasks information
+# Create HTML table for schedule tasks information
 $scheduledTasksTable = $systemInfo.ScheduledTasks | ConvertTo-Html -Fragment -As Table -Property TaskName, TaskPath, State, LastRunTime, NextRunTime, Status
 
 # Create HTML file
@@ -134,6 +135,10 @@ $html = @"
     <table>
         <tr>
             <th>Computer Name</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Computer Name</td>
             <td>$($systemInfo.ComputerName)</td>
         </tr>
     </table>
@@ -147,11 +152,9 @@ $html = @"
     $netTable
     $ipConfigTable
     $rolesTable
-    $iisTable
     $softwareTable
     $servicesTable
-    $adminTable
-    $scheduleTable
+    $scheduledTasksTable
 
 </body>
 </html>
