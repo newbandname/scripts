@@ -89,19 +89,19 @@ $tableScheduledTasks
 </html>
 "@
 
-# Create verbose HTML tables for each piece of information
-$tableOs = $osInfo | ConvertTo-Html -As Table -Fragment -Verbose
-$tableMemory = $memoryInfo | ConvertTo-Html -As Table -Fragment -Verbose
-$tableCpu = $cpuInfo | ConvertTo-Html -As Table -Fragment -Verbose
-$tableLogicalDisk = $logicalDiskInfo | ConvertTo-Html -As Table -Fragment -Verbose
-$tableFileShare = $fileShareInfo | ConvertTo-Html -As Table -Fragment -Verbose
-$tablePageFile = $pageFileInfo | ConvertTo-Html -As Table -Fragment -Verbose
-$tableNetworkInfo = $networkInfo | ConvertTo-Html -As Table -Fragment -Verbose
-$tableRolesAndFeatures = $rolesAndFeatures | ConvertTo-Html -As Table -Fragment -Verbose
-$tableIisSites = $iisSites | ConvertTo-Html -As Table -Fragment -Verbose
-$tableInstalledSoftware = $installedSoftware | ConvertTo-Html -As Table -Fragment -Verbose
-$tableServices = $services | ConvertTo-Html -As Table -Fragment -Verbose
-$tableScheduledTasks = $scheduledTasks | ConvertTo-Html -As Table -Fragment -Verbose
+# Create HTML tables for each piece of information
+$tableOs = $osInfo | ConvertTo-Html -As Table -Fragment
+$tableMemory = $memoryInfo | ConvertTo-Html -As Table -Fragment
+$tableCpu = $cpuInfo | ConvertTo-Html -As Table -Fragment
+$tableLogicalDisk = $logicalDiskInfo | ConvertTo-Html -As Table -Fragment
+$tableFileShare = $fileShareInfo | ConvertTo-Html -As Table -Fragment
+$tablePageFile = $pageFileInfo | ConvertTo-Html -As Table -Fragment
+$tableNetworkInfo = $networkInfo | ConvertTo-Html -As Table -Fragment
+$tableRolesAndFeatures = $rolesAndFeatures | ConvertTo-Html -As Table -Fragment
+$tableIisSites = $iisSites | ConvertTo-Html -As Table -Fragment
+$tableInstalledSoftware = $installedSoftware | ConvertTo-Html -As Table -Fragment
+$tableServices = $services | ConvertTo-Html -As Table -Fragment
+$tableScheduledTasks = $scheduledTasks | ConvertTo-Html -As Table -Fragment
 
 # Save HTML file to desktop
 $htmlPath = "$env:USERPROFILE\Desktop\$computerName System Information.html"
