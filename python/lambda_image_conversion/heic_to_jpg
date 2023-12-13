@@ -1,0 +1,47 @@
+import boto3
+import os
+import tempfile
+
+from PIL import Image
+import pyheif
+
+s3 = boto3.client('s3')
+
+def lambda_handler(event, context):
+    # Get bucket name and file key from the Event object
+    bucket_name = event['Records'][0]['s3']['bucket']['name']
+    key = event['Records'][0]['s3']['object']['key']
+
+    # Get the file object from S3
+    file_obj = s3.get_object(Bucket=bucket_name, Key=key)
+
+    # Open the file object and read it into in-memory data
+    data = file_obj['Body'].read()
+
+    # Decode HEIC image data into RGB
+    heif_obj = pyheif.read(data)
+    image = Image.frombytes(
+        heif_obj.mode, 
+        heif_obj.size, 
+        heif_obj.data,
+        "raw",
+        heif_obj.mode,
+        heif_obj.stride,
+    )
+
+    # Create a temp file to hold the jpeg image
+    with tempfile.TemporaryFile() as output_f:
+        # Convert the image into JPEG format and write to the temp file
+        image.save(output_f, format='JPEG')
+        output_f.seek(0)
+
+        # Create the destination file key (assuming the same directory and changing the extension to jpg)
+        dest_key = os.path.splitext(key)[0] + '.jpg'
+
+        # Upload the JPEG image to the destination bucket
+        s3.put_object(Bucket='my-destination-bucket', Key=dest_key, Body=output_f.read(), ContentType='image/jpeg')
+
+    return {
+        'statusCode': 200,
+        'body': f'Successfully converted {key} to {dest_key}'
+    }
