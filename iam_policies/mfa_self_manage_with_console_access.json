@@ -6,7 +6,8 @@
             "Effect": "Allow",
             "Action": [
                 "iam:ListVirtualMFADevices",
-                "iam:ListUsers"
+                "iam:ListUsers",
+                "iam:GetLoginProfile"
             ],
             "Resource": "*"
         },
