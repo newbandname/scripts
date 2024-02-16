@@ -6,8 +6,7 @@
             "Effect": "Allow",
             "Action": [
                 "iam:ListVirtualMFADevices",
-                "iam:ListUsers",
-                "iam:GetLoginProfile"
+                "iam:ListUsers"
             ],
             "Resource": "*"
         },
@@ -28,7 +27,9 @@
                 "iam:GetUser",
                 "iam:GetMFADevice",
                 "iam:ListMFADevices",
-                "iam:ResyncMFADevice"
+                "iam:ResyncMFADevice",
+                "iam:GetLoginProfile",
+                "iam:ChangePassword"
             ],
             "Resource": "arn:aws:iam::*:user/${aws:username}"
         }
